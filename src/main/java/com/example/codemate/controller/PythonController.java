@@ -1,7 +1,7 @@
 package com.example.codemate.controller;
 
 import com.example.codemate.dto.ResultDto;
-import com.example.codemate.service.GccService;
+import com.example.codemate.service.PythonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +14,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/c")
 @RequiredArgsConstructor
-public class GccController {
+@RequestMapping("/python")
+public class PythonController {
 
-    private final GccService gccService;
+    private final PythonService pythonService;
 
     @PostMapping("/compile")
     public ResponseEntity<?> gccCompile(@RequestPart MultipartFile file) throws IOException {
@@ -26,7 +26,7 @@ public class GccController {
         if(file.isEmpty())
             throw new IOException();
 
-        ResultDto response = new ResultDto(gccService.compile(file));
+        ResultDto response = new ResultDto(pythonService.compile(file));
 
         return new ResponseEntity<>(response, HttpStatus.OK);
 

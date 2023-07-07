@@ -6,14 +6,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 
 @Service
 public class GccService {
 
-    public String compileC(MultipartFile file) {
+    public String compile(MultipartFile file) throws IOException {
+
         // 요청받은 C 파일을 /home/ubuntu/CFiles에 저장합니다.
         String cFilePath = "/home/ubuntu/CFiles/" + file.getOriginalFilename();
         try {
@@ -21,57 +21,70 @@ public class GccService {
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
-            return "Failed to save C file.";
+            throw new IOException();
         }
 
-        // C 파일을 gcc로 컴파일하고 실행 결과 또는 오류 메시지를 저장합니다.
-        String outputFilePath = "/home/ubuntu/Outputs/" + file.getOriginalFilename() + ".log";
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder("gcc", cFilePath, "-o", outputFilePath);
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-            int exitCode = process.waitFor();
+        String outputFilePath = "/home/ubuntu/CFiles/output.txt";
+        String compileCommand = "gcc " + cFilePath + " -o /home/ubuntu/CFiles/output 2> " + outputFilePath;
+        int exitCode = executeCommand(compileCommand);
 
-            if (exitCode == 0) {
-                // 실행이 성공한 경우, 실행 결과를 읽어옵니다.
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                StringBuilder output = new StringBuilder();
-                String line;
+        System.out.println("exit code : " + exitCode);
+
+        //TODO: output을 파일 이름으로 나중에 바꾸기
+        if (exitCode == 0) {
+            // 실행 파일 실행
+            String runCommand = "/home/ubuntu/CFiles/./output > " + outputFilePath;
+            executeCommand(runCommand);
+        }
+
+        String output = readOutputFile(outputFilePath, exitCode, file.getOriginalFilename()); //TODO: 파일 이름 바꾸기
+
+        // 결과 반환
+        return output;
+
+        //TODO: 에러메세지일 경우 :까지 자르기
+
+    }
+
+
+    private String readOutputFile(String filePath, int exitCode, String filename) throws IOException {
+        StringBuilder outputBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
+            String line;
+            if(exitCode == 0) {
                 while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
+                    outputBuilder.append(line).append("\n");
                 }
-                reader.close();
-
-                // 실행 결과를 파일에 저장합니다.
-                BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath, true));
-                writer.write(output.toString());
-                writer.close();
-
-                // 파일의 내용을 읽어 반환합니다.
-                String fileContent = new String(Files.readAllBytes(Paths.get(outputFilePath)));
-                return fileContent;
             } else {
-                // 실행이 실패한 경우, 오류 메시지를 읽어옵니다.
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                StringBuilder error = new StringBuilder();
-                String line;
                 while ((line = reader.readLine()) != null) {
-                    error.append(line).append("\n");
+                    outputBuilder.append(removeWordFromString(line, filename+":")).append("\n");
                 }
-                reader.close();
-
-                // 오류 메시지를 파일에 저장합니다.
-                BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath, true));
-                writer.write(error.toString());
-                writer.close();
-
-                // 파일의 내용을 읽어 반환합니다.
-                String fileContent = new String(Files.readAllBytes(Paths.get(outputFilePath)));
-                return fileContent;
             }
+
+        } catch (IOException e) {
+            throw new IOException();
+        }
+
+        return outputBuilder.toString();
+    }
+
+    private int executeCommand(String command) {
+        int exitCode = -1;
+        try {
+            Process process = new ProcessBuilder("bash", "-c", command).start();
+            exitCode = process.waitFor();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            return "Compilation failed with an exception.";
         }
+        return exitCode;
     }
+
+    public static String removeWordFromString(String input, String word) {
+        int index = input.indexOf(word);
+        if (index != -1) {
+            return input.substring(index + word.length()).trim();
+        }
+        return input;
+    }
+
 }
