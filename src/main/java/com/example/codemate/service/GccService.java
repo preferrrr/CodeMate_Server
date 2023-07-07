@@ -6,13 +6,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 
 @Service
 public class GccService {
 
-    public String compileC(MultipartFile file)  {
+    public String compileC(MultipartFile file) {
         // 요청받은 C 파일을 /home/ubuntu/CFiles에 저장합니다.
         String cFilePath = "/home/ubuntu/CFiles/" + file.getOriginalFilename();
         try {
@@ -46,7 +47,9 @@ public class GccService {
                 writer.write(output.toString());
                 writer.close();
 
-                return output.toString();
+                // 파일의 내용을 읽어 반환합니다.
+                String fileContent = new String(Files.readAllBytes(Paths.get(outputFilePath)));
+                return fileContent;
             } else {
                 // 실행이 실패한 경우, 오류 메시지를 읽어옵니다.
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -62,7 +65,9 @@ public class GccService {
                 writer.write(error.toString());
                 writer.close();
 
-                return error.toString();
+                // 파일의 내용을 읽어 반환합니다.
+                String fileContent = new String(Files.readAllBytes(Paths.get(outputFilePath)));
+                return fileContent;
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
