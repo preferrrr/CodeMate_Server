@@ -31,7 +31,7 @@ public class PythonService {
 
 
 
-        String output = readOutputFile(outputFilePath); //TODO: 파일 이름 바꾸기
+        String output = readOutputFile(outputFilePath, file.getOriginalFilename()+"\\\","); //TODO: 파일 이름 바꾸기
 
         // 결과 반환
         return output;
@@ -39,13 +39,13 @@ public class PythonService {
         //TODO: 에러메세지일 경우 :까지 자르기
     }
 
-    private String readOutputFile(String filePath) throws IOException {
+    private String readOutputFile(String filePath, String filename) throws IOException {
         StringBuilder outputBuilder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
-                outputBuilder.append(line).append("\n");
+                outputBuilder.append(removeWordFromString(line, filename)).append("\n");
             }
 
         } catch (IOException e) {

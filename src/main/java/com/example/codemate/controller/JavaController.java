@@ -1,7 +1,7 @@
 package com.example.codemate.controller;
 
 import com.example.codemate.dto.ResultDto;
-import com.example.codemate.service.PythonService;
+import com.example.codemate.service.JavaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,20 +15,20 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/python")
-public class PythonController {
+@RequestMapping("/java")
+public class JavaController {
 
-    private final PythonService pythonService;
+    private final JavaService javaService;
 
     @PostMapping("/compile")
-    public ResponseEntity<?> pythonCompile(@RequestPart MultipartFile file) throws IOException {
+    public ResponseEntity<?> javaCompile(@RequestPart MultipartFile file) throws IOException {
 
         if(file.isEmpty())
             throw new IOException();
 
-        ResultDto response = new ResultDto(pythonService.compile(file));
+        ResultDto response = new ResultDto(javaService.compile(file));
 
         return new ResponseEntity<>(response, HttpStatus.OK);
 
     }
-}
+}}
