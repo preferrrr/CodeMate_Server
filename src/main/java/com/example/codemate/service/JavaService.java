@@ -33,7 +33,8 @@ public class JavaService {
         //TODO: output을 파일 이름으로 나중에 바꾸기
         if (exitCode == 0) {
             // 실행 파일 실행
-            String runCommand = "java /home/ubuntu/JavaFiles/ " + file.getOriginalFilename().substring(0, file.getOriginalFilename().length() - 6);
+            String runCommand = "java /home/ubuntu/JavaFiles/ " + file.getOriginalFilename().substring(0, file.getOriginalFilename().length() - 6) +
+                    " > /home/ubuntu/JavaFiles/output.txt";
             executeCommand(runCommand);
         }
 
