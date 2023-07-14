@@ -3,76 +3,85 @@ package com.example.codemate.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.tools.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 @Service
 public class JavaService {
 
-
     public String compile(MultipartFile file) throws IOException {
 
-        // 요청받은 C 파일을 /home/ubuntu/JavaFiles에 저장합니다.
-        String javaFilePath = "/home/ubuntu/JavaFiles/" + file.getOriginalFilename();
+        String javaFilePath = "C:/javatest/";
+        //String javaFilePath = "/home/ubuntu/JavaFiles/";
+        String fullPath = javaFilePath + file.getOriginalFilename();
+
         try {
-            Path destination = new File(javaFilePath).toPath();
+            Path destination = new File(fullPath).toPath();
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             e.printStackTrace();
             throw new IOException();
         }
 
-        String outputFilePath = "/home/ubuntu/JavaFiles/output.txt";
-        String compileCommand = "javac " + javaFilePath + " 2> " + outputFilePath;
-        int exitCode = executeCommand(compileCommand);
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        String output = "";
+        int compileResult = compiler.run(null, null, null, fullPath);
+        if (compileResult == 0) {
+            output = executeJavaFile(javaFilePath, file.getOriginalFilename());
+        } else {
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+            StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
 
-        System.out.println("exit code : " + exitCode);
+            Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjectsFromStrings(Arrays.asList(fullPath));
+            StringWriter stringWriter = new StringWriter();
+            JavaCompiler.CompilationTask task = compiler.getTask(stringWriter, fileManager, diagnostics, null, null, compilationUnits);
+            task.call();
 
-        //TODO: output을 파일 이름으로 나중에 바꾸기
-        if (exitCode == 0) {
-            // 실행 파일 실행
-            String runCommand = "java /home/ubuntu/JavaFiles/ " + file.getOriginalFilename().substring(0, file.getOriginalFilename().length() - 6) +
-                    " > /home/ubuntu/JavaFiles/output.txt";
-            executeCommand(runCommand);
-        }
-
-        String output = readOutputFile(outputFilePath, exitCode, file.getOriginalFilename()); //TODO: 파일 이름 바꾸기
-
-        // 결과 반환
-        return output;
-
-        //TODO: 에러메세지일 경우 :까지 자르기
-
-    }
-
-
-    private String readOutputFile(String filePath, int exitCode, String filename) throws IOException {
-        StringBuilder outputBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                outputBuilder.append(line).append("\n");
+            StringBuilder errorMessage = new StringBuilder();
+            for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+                errorMessage.append(diagnostic).append(System.lineSeparator());
             }
 
-        } catch (IOException e) {
-            throw new IOException();
+            output = errorMessage.toString();
+            output = removeWordFromString(output, "error: ");
+
+            fileManager.close();
         }
 
-        return outputBuilder.toString();
+        return output;
     }
 
-    private int executeCommand(String command) {
-        int exitCode = -1;
+    private static String executeJavaFile(String javaFilePath, String filename) {
         try {
-            Process process = new ProcessBuilder("bash", "-c", command).start();
-            exitCode = process.waitFor();
-        } catch (IOException | InterruptedException e) {
+            ProcessBuilder processBuilder = new ProcessBuilder("java", "-cp", javaFilePath, filename.substring(0, filename.length() - 5));
+            Process process = processBuilder.start();
+
+            InputStream inputStream = process.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+            reader.close();
+
+            return output.toString();
+        } catch (IOException e) {
             e.printStackTrace();
+            return "Execution failed: " + e.getMessage();
         }
-        return exitCode;
     }
 
-
+    public static String removeWordFromString(String input, String word) {
+        int index = input.indexOf(word);
+        if (index != -1) {
+            return input.substring(index + word.length()).trim();
+        }
+        return input;
+    }
 }

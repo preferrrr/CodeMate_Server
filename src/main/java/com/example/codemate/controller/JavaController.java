@@ -26,7 +26,8 @@ public class JavaController {
         if(file.isEmpty())
             throw new IOException();
 
-        ResultDto response = new ResultDto(javaService.compile(file));
+        String result = javaService.compile(file);
+        ResultDto response = new ResultDto(result);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
 
