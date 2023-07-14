@@ -15,8 +15,8 @@ public class JavaService {
 
     public String compile(MultipartFile file) throws IOException {
 
-        String javaFilePath = "C:/javatest/";
-        //String javaFilePath = "/home/ubuntu/JavaFiles/";
+        //String javaFilePath = "C:/javatest/";
+        String javaFilePath = "/home/ubuntu/JavaFiles/";
         String fullPath = javaFilePath + file.getOriginalFilename();
 
         try {
