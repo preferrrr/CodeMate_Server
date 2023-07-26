@@ -21,12 +21,13 @@ public class PythonController {
     private final PythonService pythonService;
 
     @PostMapping("/compile")
-    public ResponseEntity<?> pythonCompile(@RequestPart MultipartFile file) throws IOException {
+    public ResponseEntity<?> pythonCompile(@RequestPart(name = "file") MultipartFile file,
+                                           @RequestPart(name = "input") MultipartFile input) throws IOException {
 
-        if(file.isEmpty())
+        if (file.isEmpty())
             throw new IOException();
 
-        ResultDto response = new ResultDto(pythonService.compile(file));
+        ResultDto response = new ResultDto(pythonService.compile(file, input));
 
         return new ResponseEntity<>(response, HttpStatus.OK);
 

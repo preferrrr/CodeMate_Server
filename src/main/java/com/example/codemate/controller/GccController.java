@@ -22,9 +22,9 @@ public class GccController {
 
     @PostMapping("/compile")
     public ResponseEntity<?> gccCompile(@RequestPart(name = "file") MultipartFile file,
-                                        @RequestPart(name = "input", required = false)MultipartFile input) throws IOException {
+                                        @RequestPart(name = "input", required = false) MultipartFile input) throws IOException {
 
-        if(file.isEmpty())
+        if (file.isEmpty())
             throw new IOException();
 
         ResultDto response = new ResultDto(gccService.compile(file, input));

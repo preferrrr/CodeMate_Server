@@ -1,5 +1,6 @@
 package com.example.codemate.service;
 
+import com.example.codemate.exception.NoInputValueException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,9 +12,13 @@ import java.nio.file.StandardCopyOption;
 @Service
 public class PythonService {
 
-    public String compile(MultipartFile file) throws IOException {
-        String pythonFilePath = "/home/ubuntu/PythonFiles/" + file.getOriginalFilename();
+    public String compile(MultipartFile file, MultipartFile input) throws IOException {
 
+        if(containsInput(file) && input.isEmpty())
+            throw new NoInputValueException();
+
+        String pythonFilePath = "/home/ubuntu/PythonFiles/" + file.getOriginalFilename();
+        String inputFilePath = "/home/ubuntu/PythonFiles/" + input.getOriginalFilename();
         //클라이언트에서 보낸 파일 저장.
         try {
             Path destination = new File(pythonFilePath).toPath();
@@ -23,20 +28,33 @@ public class PythonService {
             throw new IOException();
         }
 
+        String compileCommand;
+
+
+        if (input.isEmpty()) {
+            compileCommand = "python3 " + pythonFilePath + " > /home/ubuntu/PythonFiles/output.txt 2>&1";
+        } else {
+            try {
+                Path destination = new File(inputFilePath).toPath();
+                Files.copy(input.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new IOException();
+            }
+            compileCommand = "python3 " + pythonFilePath + " < " + inputFilePath + " > /home/ubuntu/PythonFiles/output.txt 2>&1";
+
+        }
 
         String outputFilePath = "/home/ubuntu/PythonFiles/output.txt";
-        String compileCommand = "python3 " + pythonFilePath + " > /home/ubuntu/PythonFiles/output.txt 2>&1";
 
         Process process = new ProcessBuilder("bash", "-c", compileCommand).start();
 
 
-
-        String output = readOutputFile(outputFilePath, file.getOriginalFilename()+"\\\","); //TODO: 파일 이름 바꾸기
+        String output = readOutputFile(outputFilePath, file.getOriginalFilename() + "\\\",");
 
         // 결과 반환
         return output;
 
-        //TODO: 에러메세지일 경우 :까지 자르기
     }
 
     private String readOutputFile(String filePath, String filename) throws IOException {
@@ -61,5 +79,11 @@ public class PythonService {
             return input.substring(index + word.length()).trim();
         }
         return input;
+    }
+
+    private boolean containsInput(MultipartFile file) throws IOException {
+        String content = new String(file.getBytes());
+
+        return content.contains("input") || content.contains("readline()");
     }
 }

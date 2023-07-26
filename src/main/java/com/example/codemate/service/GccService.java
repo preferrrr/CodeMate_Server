@@ -1,5 +1,6 @@
 package com.example.codemate.service;
 
+import com.example.codemate.exception.NoInputValueException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,8 +16,11 @@ public class GccService {
     public String compile(MultipartFile file, MultipartFile input) throws IOException {
 
 
+        if(containsInput(file) && input.isEmpty())
+            throw new NoInputValueException();
+
         String cFilePath = "/home/ubuntu/CFiles/" + file.getOriginalFilename();
-        String inputPath = "/home/ubuntu/CFiles/" + input.getOriginalFilename();
+
         //서버에 파일 저장
         try {
             Path destination = new File(cFilePath).toPath();
@@ -25,6 +29,7 @@ public class GccService {
             e.printStackTrace();
             throw new IOException();
         }
+        String inputPath = "/home/ubuntu/CFiles/" + input.getOriginalFilename();
 
         String outputFilePath = "/home/ubuntu/CFiles/output.txt";
         String compileCommand = "gcc " + cFilePath + " -o /home/ubuntu/CFiles/output 2> " + outputFilePath;
@@ -32,10 +37,9 @@ public class GccService {
 
         if (exitCode == 0) {
             String runCommand;
-            if(input.isEmpty()) {
+            if (input.isEmpty()) {
                 runCommand = "/home/ubuntu/CFiles/./output > " + outputFilePath;
-            }
-            else {
+            } else {
                 try {
                     Path destination = new File(inputPath).toPath();
                     Files.copy(input.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
@@ -43,7 +47,7 @@ public class GccService {
                     e.printStackTrace();
                     throw new IOException();
                 }
-                runCommand = "/home/ubuntu/CFiles/./output < /home/ubuntu/CFiles/input.txt" + " > " + outputFilePath;
+                runCommand = "/home/ubuntu/CFiles/./output < " + inputPath + " > " + outputFilePath;
             }
             executeCommand(runCommand);
 
@@ -60,13 +64,13 @@ public class GccService {
         StringBuilder outputBuilder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
             String line;
-            if(exitCode == 0) {
+            if (exitCode == 0) {
                 while ((line = reader.readLine()) != null) {
                     outputBuilder.append(line).append("\n");
                 }
             } else {
                 while ((line = reader.readLine()) != null) {
-                    outputBuilder.append(removeWordFromString(line, filename+":")).append("\n");
+                    outputBuilder.append(removeWordFromString(line, filename + ":")).append("\n");
                 }
             }
 
@@ -94,6 +98,19 @@ public class GccService {
             return input.substring(index + word.length()).trim();
         }
         return input;
+    }
+
+    private boolean containsInput(MultipartFile file) throws IOException {
+        String content = new String(file.getBytes());
+        System.out.println(content);
+        boolean result = content.contains("scanf") || content.contains("getchar")
+                || content.contains("fgets") || content.contains("gets");
+
+        if(result)
+            System.out.println("true");
+        else System.out.println("false");
+
+        return result;
     }
 
 }

@@ -21,12 +21,13 @@ public class JavaController {
     private final JavaService javaService;
 
     @PostMapping("/compile")
-    public ResponseEntity<?> javaCompile(@RequestPart MultipartFile file) throws IOException {
+    public ResponseEntity<?> javaCompile(@RequestPart(name = "file") MultipartFile file,
+                                         @RequestPart(name = "input", required = false) MultipartFile input) throws IOException {
 
         if(file.isEmpty())
             throw new IOException();
 
-        String result = javaService.compile(file);
+        String result = javaService.compile(file, input);
         ResultDto response = new ResultDto(result);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
