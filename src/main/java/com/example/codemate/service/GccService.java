@@ -12,10 +12,12 @@ import java.nio.file.StandardCopyOption;
 @Service
 public class GccService {
 
-    public String compile(MultipartFile file) throws IOException {
+    public String compile(MultipartFile file, MultipartFile input) throws IOException {
 
-        // 요청받은 C 파일을 /home/ubuntu/CFiles에 저장합니다.
+
         String cFilePath = "/home/ubuntu/CFiles/" + file.getOriginalFilename();
+        String inputPath = "/home/ubuntu/CFiles/" + input.getOriginalFilename();
+        //서버에 파일 저장
         try {
             Path destination = new File(cFilePath).toPath();
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
@@ -28,21 +30,28 @@ public class GccService {
         String compileCommand = "gcc " + cFilePath + " -o /home/ubuntu/CFiles/output 2> " + outputFilePath;
         int exitCode = executeCommand(compileCommand);
 
-        System.out.println("exit code : " + exitCode);
-
-        //TODO: output을 파일 이름으로 나중에 바꾸기
         if (exitCode == 0) {
-            // 실행 파일 실행
-            String runCommand = "/home/ubuntu/CFiles/./output > " + outputFilePath;
+            String runCommand;
+            if(input.isEmpty()) {
+                runCommand = "/home/ubuntu/CFiles/./output > " + outputFilePath;
+            }
+            else {
+                try {
+                    Path destination = new File(inputPath).toPath();
+                    Files.copy(input.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new IOException();
+                }
+                runCommand = "/home/ubuntu/CFiles/./output < /home/ubuntu/CFiles/input.txt" + " > " + outputFilePath;
+            }
             executeCommand(runCommand);
+
         }
 
-        String output = readOutputFile(outputFilePath, exitCode, file.getOriginalFilename()); //TODO: 파일 이름 바꾸기
+        String output = readOutputFile(outputFilePath, exitCode, file.getOriginalFilename());
 
-        // 결과 반환
         return output;
-
-        //TODO: 에러메세지일 경우 :까지 자르기
 
     }
 

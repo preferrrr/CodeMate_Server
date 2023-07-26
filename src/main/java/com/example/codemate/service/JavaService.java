@@ -73,7 +73,7 @@ public class JavaService {
             return output.toString();
         } catch (IOException e) {
             e.printStackTrace();
-            return "Execution failed: " + e.getMessage();
+            return e.getMessage();
         }
     }
 
