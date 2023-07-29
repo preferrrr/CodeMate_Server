@@ -1,6 +1,6 @@
 package com.example.codemate.controller;
 
-import com.example.codemate.dto.ResultDto;
+import com.example.codemate.dto.CompileResponseDto;
 import com.example.codemate.service.JavaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,7 +28,7 @@ public class JavaController {
             throw new IOException();
 
         String result = javaService.compile(file, input);
-        ResultDto response = new ResultDto(result);
+        CompileResponseDto response = new CompileResponseDto(result);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
 

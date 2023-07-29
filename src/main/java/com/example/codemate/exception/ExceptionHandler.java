@@ -1,6 +1,6 @@
 package com.example.codemate.exception;
 
-import com.example.codemate.dto.ResultDto;
+import com.example.codemate.dto.CompileResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ public class ExceptionHandler {
 //        String msg = e.getNAME() + ": [" + e.getMessage() + "]";
 //        log.error(msg);
 
-        ResultDto exceptionMessage = new ResultDto("입력값이 없습니다.");
+        CompileResponseDto exceptionMessage = new CompileResponseDto("입력값이 없습니다.");
         return new ResponseEntity<>(exceptionMessage, HttpStatus.NO_CONTENT);
     }
 

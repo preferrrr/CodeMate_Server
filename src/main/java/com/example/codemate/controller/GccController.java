@@ -1,6 +1,6 @@
 package com.example.codemate.controller;
 
-import com.example.codemate.dto.ResultDto;
+import com.example.codemate.dto.CompileResponseDto;
 import com.example.codemate.service.GccService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +27,7 @@ public class GccController {
         if (file.isEmpty())
             throw new IOException();
 
-        ResultDto response = new ResultDto(gccService.compile(file, input));
+        CompileResponseDto response = new CompileResponseDto(gccService.compile(file, input));
 
         return new ResponseEntity<>(response, HttpStatus.OK);
 
