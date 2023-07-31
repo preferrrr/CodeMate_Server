@@ -16,49 +16,43 @@ public class JavaService {
 
     private final String javaFilesPath = "/home/ubuntu/JavaFiles/";
     public String compile(MultipartFile file, MultipartFile input) throws IOException {
-
-        if(containsInput(file) && input.isEmpty()) // 입력받는 함수가 있는데, input file을 보내지 않은 경우.
+        if (containsInput(file) && input.isEmpty()) {
             throw new NoInputValueException();
+        }
 
         String filePath = javaFilesPath + file.getOriginalFilename();
-        //클라이언트에서 보낸 파일 저장.
-        try {
-            Path destination = new File(filePath).toPath();
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IOException();
-        }
+
+        Path destination = new File(filePath).toPath();
+        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
 
         String compileCommand;
-
-        String inputFilePath = "/home/ubuntu/JavaFiles/" + input.getOriginalFilename();
-
-        if (input.isEmpty()) { // 입력받는 경우가 없으면
-            compileCommand = "java " + filePath + " > /home/ubuntu/JavaFiles/output.txt 2>&1";
-        }
-        else { // 입력받는 경우가 있으면
-            try {
-                Path destination = new File(inputFilePath).toPath();
-                Files.copy(input.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new IOException();
-            }
-            compileCommand = "java " + filePath + " < " + inputFilePath + " > /home/ubuntu/JavaFiles/output.txt 2>&1";
-
-        }
-
         String outputFilePath = "/home/ubuntu/JavaFiles/output.txt";
+
+        if (input.isEmpty()) {
+            compileCommand = "java " + filePath + " > " + outputFilePath + " 2>&1";
+        } else {
+            String inputFilePath = "/home/ubuntu/JavaFiles/" + input.getOriginalFilename();
+            Path destinationInput = new File(inputFilePath).toPath();
+            Files.copy(input.getInputStream(), destinationInput, StandardCopyOption.REPLACE_EXISTING);
+
+            compileCommand = "java " + filePath + " < " + inputFilePath + " > " + outputFilePath + " 2>&1";
+        }
 
         Process process = new ProcessBuilder("bash", "-c", compileCommand).start();
 
+        try {
+            int exitCode = process.waitFor();
 
-        String output = readOutputFile(outputFilePath, file.getOriginalFilename() + "\\\",");
+            if (exitCode != 0) {
+                throw new RuntimeException();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new RuntimeException();
+        }
 
         // 결과 반환
-        return output;
-
+        return readOutputFile(outputFilePath, file.getOriginalFilename() + "\\\",");
     }
 
     private String readOutputFile(String filePath, String filename) throws IOException {

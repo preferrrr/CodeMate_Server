@@ -21,6 +21,7 @@ import java.io.IOException;
 @RequestMapping("/c")
 @RequiredArgsConstructor
 @Tag(name = "C, C++ 관련 API")
+@CrossOrigin("*")
 public class GccController {
 
     private final GccService gccService;

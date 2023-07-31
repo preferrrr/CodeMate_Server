@@ -29,7 +29,6 @@ public class GccService {
             e.printStackTrace();
             throw new IOException();
         }
-        String inputPath = "/home/ubuntu/CFiles/" + input.getOriginalFilename();
 
         String outputFilePath = "/home/ubuntu/CFiles/output.txt";
         String compileCommand = "gcc " + cFilePath + " -o /home/ubuntu/CFiles/output 2> " + outputFilePath;
@@ -40,6 +39,7 @@ public class GccService {
             if (input.isEmpty()) {
                 runCommand = "/home/ubuntu/CFiles/./output > " + outputFilePath;
             } else {
+                String inputPath = "/home/ubuntu/CFiles/" + input.getOriginalFilename();
                 try {
                     Path destination = new File(inputPath).toPath();
                     Files.copy(input.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
