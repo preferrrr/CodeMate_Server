@@ -8,18 +8,23 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 
 @Service
 public class GccService {
 
+    private static final String CFILES_DIR = "/home/ubuntu/CFiles/";
+
     public String compile(MultipartFile file, MultipartFile input) throws IOException {
 
 
-        if(containsInput(file) && input.isEmpty())
+        if (containsInput(file) && input.isEmpty())
             throw new NoInputValueException();
 
-        String cFilePath = "/home/ubuntu/CFiles/" + file.getOriginalFilename();
+
+        String filename = UUID.randomUUID().toString(); // 동시성 문제를 해결하기 위해서 랜덤문자열 파일명으로 저장.
+        String cFilePath = CFILES_DIR + filename + ".c";
 
         //서버에 파일 저장
         try {
@@ -30,16 +35,16 @@ public class GccService {
             throw new IOException();
         }
 
-        String outputFilePath = "/home/ubuntu/CFiles/output.txt";
-        String compileCommand = "gcc " + cFilePath + " -o /home/ubuntu/CFiles/output 2> " + outputFilePath;
+        String outputFilePath = CFILES_DIR + filename + ".txt";
+        String compileCommand = "gcc " + cFilePath + " -o " + CFILES_DIR + filename + " 2> " + outputFilePath;
         int exitCode = executeCommand(compileCommand);
 
         if (exitCode == 0) {
             String runCommand;
             if (input.isEmpty()) {
-                runCommand = "/home/ubuntu/CFiles/./output > " + outputFilePath;
+                runCommand = CFILES_DIR + "./" + filename + " > " + outputFilePath;
             } else {
-                String inputPath = "/home/ubuntu/CFiles/" + input.getOriginalFilename();
+                String inputPath = CFILES_DIR + UUID.randomUUID().toString() + ".txt";
                 try {
                     Path destination = new File(inputPath).toPath();
                     Files.copy(input.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
@@ -47,13 +52,13 @@ public class GccService {
                     e.printStackTrace();
                     throw new IOException();
                 }
-                runCommand = "/home/ubuntu/CFiles/./output < " + inputPath + " > " + outputFilePath;
+                runCommand = CFILES_DIR + "./" + filename + " < " + inputPath + " > " + outputFilePath;
             }
             executeCommand(runCommand);
 
         }
 
-        String output = readOutputFile(outputFilePath, exitCode, file.getOriginalFilename());
+        String output = readOutputFile(outputFilePath, exitCode, filename);
 
         return output;
 
@@ -70,7 +75,7 @@ public class GccService {
                 }
             } else {
                 while ((line = reader.readLine()) != null) {
-                    outputBuilder.append(removeWordFromString(line, filename + ":")).append("\n");
+                    outputBuilder.append(removeWordFromString(line, filename + ".c:")).append("\n");
                 }
             }
 
@@ -102,13 +107,8 @@ public class GccService {
 
     private boolean containsInput(MultipartFile file) throws IOException {
         String content = new String(file.getBytes());
-        System.out.println(content);
         boolean result = content.contains("scanf") || content.contains("getchar")
                 || content.contains("fgets") || content.contains("gets");
-
-        if(result)
-            System.out.println("true");
-        else System.out.println("false");
 
         return result;
     }

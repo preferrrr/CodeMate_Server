@@ -15,14 +15,15 @@ import java.util.UUID;
 @Service
 public class OcrService {
 
-    private static String IMAGE_FILE_PATH = "/home/ubuntu/ImageFiles/";
-    private static String OCR_DATA_PATH = "/home/ubuntu/Ocr/";
+    private static final String IMAGE_FILE_PATH = "/home/ubuntu/ImageFiles/";
+    private static final String OCR_DATA_PATH = "/home/ubuntu/Ocr/";
+//    private static String IMAGE_FILE_PATH = "C:\\intellij_project\\capstone_image\\";
+//    private static String OCR_DATA_PATH = "C:\\intellij_project\\capstone_image\\";
 
-    //private static String IMAGEFILE_PATH = "C:\\intellij_project\\capstone_image\\";
-    public String ocr(MultipartFile file) throws IOException{
+    public String ocr(MultipartFile file) throws IOException {
 
         /**요청으로 받은 이미지 저장*/
-        String filename = UUID.randomUUID().toString() + file.getOriginalFilename().substring(file.getOriginalFilename().length()-4, file.getOriginalFilename().length());
+        String filename = UUID.randomUUID().toString() + file.getOriginalFilename().substring(file.getOriginalFilename().length() - 4, file.getOriginalFilename().length());
 
         String imageFilePath = IMAGE_FILE_PATH + filename;
 
@@ -56,7 +57,7 @@ public class OcrService {
 
         File file = new File(filePath);
 
-        if(file.exists() && file.canRead()) {
+        if (file.exists() && file.canRead()) {
             try {
                 result = tesseract.doOCR(file);
             } catch (TesseractException e) {
