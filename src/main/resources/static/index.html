@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/earlyaccess/nanumgothiccoding.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <div class="codemate">
+        <div class="buttonbox">
+            <div class="buttonbox-left">
+                <button type="button" class="leftTab selected-tab" id="index_tab1">
+                    Default.c
+                    <!-- <img src="images/Close.png" class="closeTab" /> -->
+                </button>
+                <button type="button" id="append">+</button>
+            </div>
+            <div class="buttonbox-right">
+                <button type="button" id="index_console">Console</button>
+                <button type="button" id="ai" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+                    <img src="images/AI3.png" style="width: 20px" />
+                </button>
+            </div>
+        </div>
+
+        <div style="clear: both"></div>
+        <div class="codemate-content">
+            <div class="tabs">
+                <div id="tab1">
+                    <div id="monaco_tab1" style="height: 600px"></div>
+                </div>
+                <div id="tab_console">
+                    <div id="console_content">
+                        <div id="console_output">test</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="btn-group">
+                    <a id="btn_export" title="file export">
+                        <img src="images/Export.png" />
+                    </a>
+                    <a id="download_link" style="display: none"></a>
+                    <a id="btn_capture" title="capture & paste">
+                        <img src="images/Capture.png" />
+                    </a>
+                    <a id="btn_copy" title="code copy">
+                        <img src="images/Copy.png" />
+                    </a>
+                    <button id="btn_input" onclick="toggleSlideWindow()">
+                        Input
+                    </button>
+                </div>
+                <div class="run">
+                    <button id="btn_run">Run</button>
+                </div>
+            </div>
+
+
+            <div class="slide-container">
+                <button id="btn_input_slide" onclick="toggleSlideWindow()">
+                    Input
+                </button>
+                <textarea name="input_text" id="input_text"></textarea>
+            </div>
+            <a id="captureImg" style="display: none"></a>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <div class="modal fade" id="imgCheckModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="secondModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="secondModalLabel">
+                        캡쳐 이미지 확인
+                    </h5>
+                    <button type="button" id="ocr_close_btn" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="canvasContainer"></div>
+                    <div id="OCR_outputContainer">
+                        <div id="OCR_output">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a id="ocr_copy">
+                        <img src="images/Copy.png" />
+                    </a>
+                    <button id="reCaptureBtn" type="button" class="btn">
+                        다시 캡쳐
+                    </button>
+                    <button id="ocrBtn" type="button" class="btn" on>
+                        코드로 변환
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">
+                        AI에게 질문하기
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white btn-close-editor" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-code">
+                        <div id="monaco-read-only" style="height: 450px; width: 400px"></div>
+                    </div>
+                    <div class="modal-chat">
+                        <div class="modal-chat-content"></div>
+                        <div class="modal-chat-write">
+                            <div class="modal-chat-btn">
+                                <button id="modal-chat-btn1">
+                                    이 코드의 오류를 찾아줘.
+                                </button>
+                                <button id="modal-chat-btn2">
+                                    이 코드는 어떻게 작동돼?
+                                </button>
+                            </div>
+                            <input id="chat-write" type="text" />
+                            <button id="chat-submit" onclick="submitChat()">
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="clearBtn" type="button" class="btn">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.js"></script>
+
+    <script src="tab.js"></script>
+</body>
+
+</html>
