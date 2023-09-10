@@ -321,7 +321,7 @@ $("#btn_run").click(function () {
     formData.append("file", blob, filenames[currentTabNum - 1]);
     formData.append("input", InputBlob, "input.txt");
 
-    var serverURL = "";
+    var serverURL = "lodestar.shop";
 
     if (filenames[currentTabNum - 1].split(".")[1] == "py")
         serverURL += "/python/compile";
@@ -463,7 +463,7 @@ function screenshot(e) {
             formData.append("file", blob, "test.jpg");
 
             $.ajax({
-                url: "http://localhost:8080/ocr",
+                url: "lodestar.shop/ocr",
                 type: "POST",
                 data: formData,
                 processData: false,

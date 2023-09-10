@@ -30,13 +30,7 @@ public class SecurityConfig {
                 .csrf((csrf) -> csrf.disable())
                 .cors((cors) -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/c/**").permitAll();
-                    auth.requestMatchers("/python/**").permitAll();
-                    auth.requestMatchers("/java/**").permitAll();
-                    auth.requestMatchers("/ocr").permitAll();
-                    auth.requestMatchers("/main").permitAll();
-                    auth.requestMatchers("/index.html").permitAll();
-
+                    auth.anyRequest().permitAll();
                 });
 
         return http.build();
