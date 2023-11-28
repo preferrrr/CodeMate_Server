@@ -4,24 +4,24 @@ import com.theokanning.openai.completion.CompletionRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Setter
 public class GPTCompletionRequest {
 
-    private String model;
 
     private String prompt;
 
-    private Integer maxToken;
 
 
     public static CompletionRequest of(GPTCompletionRequest restRequest) {
         return CompletionRequest.builder()
-                .model(restRequest.getModel())
+                .model("text-davinci-003")
                 .prompt(restRequest.getPrompt())
-                .maxTokens(restRequest.getMaxToken())
+                .maxTokens(1000)
                 .build();
     }
 }

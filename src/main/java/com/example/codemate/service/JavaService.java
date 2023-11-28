@@ -1,13 +1,14 @@
 package com.example.codemate.service;
 
+import com.example.codemate.dto.RunResponseDto;
+import com.example.codemate.exception.FileSaveException;
+import com.example.codemate.exception.InfiniteLoopException;
 import com.example.codemate.exception.NoInputValueException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
@@ -15,71 +16,62 @@ public class JavaService {
 
     private static final String JAVAFILES_DIR = "/home/ubuntu/JavaFiles/";
 
-    public String compile(MultipartFile file, MultipartFile input) throws IOException {
-        if (containsInput(file) && input.isEmpty()) {
-            throw new NoInputValueException();
-        }
+    public RunResponseDto compile(MultipartFile file, MultipartFile input) throws IOException {
+
+        //객체 선언만 해두거나 import만 해두면 입력값이 필요하지 않은데도 예외가 생길 수 있음.
+//        final String[] inputKeywords = {"InputStreamReader", "Scanner", "BufferedReader"};
+//
+//        if (FileService.containsInput(inputKeywords, file) && input.isEmpty()) {//사용자 입력값이 필요한데 없으면 예외
+//            throw new NoInputValueException();
+//        }
+        /**프로세스의 실행 시간이 10초가 지나면 종료시키므로써, 입력값이 필요하지만 없을 때의 예외가 처리됨.*/
+
 
         String filename = UUID.randomUUID().toString();
-        String filePath = JAVAFILES_DIR + filename + ".java";
-
-        Path destination = new File(filePath).toPath();
-        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-
-        String compileCommand;
+        String javaFilePath = JAVAFILES_DIR + filename + ".java";
         String outputFilePath = JAVAFILES_DIR + filename + ".txt";
 
-        if (input.isEmpty()) {
-            compileCommand = "java " + filePath + " > " + outputFilePath + " 2>&1";
-        } else {
-            String inputFilePath = JAVAFILES_DIR + UUID.randomUUID().toString() + ".txt";
-            Path destinationInput = new File(inputFilePath).toPath();
-            Files.copy(input.getInputStream(), destinationInput, StandardCopyOption.REPLACE_EXISTING);
-
-            compileCommand = "java " + filePath + " < " + inputFilePath + " > " + outputFilePath + " 2>&1";
-        }
-
-        Process process = new ProcessBuilder("bash", "-c", compileCommand).start();
-
+        //서버에 파일 저장, copy-> transferTo로 변경
         try {
-            int exitCode = process.waitFor();
-
-        } catch (InterruptedException e) {
+            Path destination = new File(javaFilePath).toPath();
+            file.transferTo(destination); //동기로 실행되기 때문에 저장이 완료되어야 다음 코드가 실행됨.
+        } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException();
+            throw new FileSaveException();
         }
 
-        // 결과 반환
-        return readOutputFile(outputFilePath, filename + ".java:");
-    }
 
-    private String readOutputFile(String filePath, String filename) throws IOException {
-        StringBuilder outputBuilder = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)))) {
-            String line;
+        String runCommand;
 
-            while ((line = reader.readLine()) != null) {
-                outputBuilder.append(removeWordFromString(line, filename)).append("\n");
+        if (input.isEmpty()) {
+
+            runCommand = "java " + javaFilePath + " > " + outputFilePath + " 2>&1";
+
+        } else {
+
+            String inputPath = JAVAFILES_DIR + UUID.randomUUID().toString() + ".txt";
+
+            try {
+                Path destination = new File(inputPath).toPath();
+                input.transferTo(destination);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new FileSaveException();
             }
 
-        } catch (IOException e) {
-            throw new IOException();
+            runCommand = "java " + javaFilePath + " < " + inputPath + " > " + outputFilePath + " 2>&1";
+
         }
 
-        return outputBuilder.toString();
+        int runExitCode = FileService.executeCommand(runCommand);
+
+        if(runExitCode == -1)
+            throw new InfiniteLoopException();
+
+        String output = FileService.readOutputFile(outputFilePath, runExitCode, filename + ".java:");
+
+        // 결과 반환
+        return RunResponseDto.builder().result(output).build();
     }
 
-    public static String removeWordFromString(String input, String word) {
-        int index = input.indexOf(word);
-        if (index != -1) {
-            return input.substring(index + word.length()).trim();
-        }
-        return input;
-    }
-
-    private boolean containsInput(MultipartFile file) throws IOException {
-        String content = new String(file.getBytes());
-
-        return content.contains("InputStreamReader") || content.contains("Scanner");
-    }
 }

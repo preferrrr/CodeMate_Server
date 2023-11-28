@@ -15,8 +15,18 @@ window.onload = function () {
         .getElementById("btn_capture")
         .addEventListener("click", function (e) {
             // 마우스 커서 모양 변경 (eidt_cursor 클래스 추가)
-            document.querySelector("body").classList.add("edit_cursor");
-            screenshot(e);
+            window.parent.postMessage({ hello: 'imgCheckModal' }, '*');
+
+        });
+
+    document
+        .getElementById("ai")
+        .addEventListener("click", function (e) {
+            // 마우스 커서 모양 변경 (eidt_cursor 클래스 추가)
+            var currentTabNum = currentTab[currentTab.length - 1];
+            var currentEditorValue = editors[currentTabNum - 1].getValue();
+            window.parent.postMessage({ hello: 'AIModal', code: currentEditorValue }, '*');
+
         });
 };
 $(document).ready(function () {
@@ -94,6 +104,7 @@ $(document).ready(function () {
                         automaticLayout: true,
                         language: language,
                         value: "",
+                        formatOnPaste: true
                     }
                 );
             } else if (language == "c" || language == "cpp") {
@@ -104,6 +115,7 @@ $(document).ready(function () {
                         automaticLayout: true,
                         language: language,
                         value: ["int main() {", "", "}"].join("\n"),
+                        formatOnPaste: true
                     }
                 );
             } else if (language == "java") {
@@ -120,6 +132,7 @@ $(document).ready(function () {
                             "   }",
                             "}",
                         ].join("\n"),
+                        formatOnPaste: true
                     }
                 );
             }
@@ -189,6 +202,7 @@ require(["vs/editor/editor.main"], function () {
         automaticLayout: true,
         language: "c",
         value: ["int main() {", "", "}"].join("\n"),
+        formatOnPaste: true
     });
 
     editors.push(editor);
@@ -196,55 +210,55 @@ require(["vs/editor/editor.main"], function () {
 
 /**************************** AI Modal *****************************/
 
-var myModalEl = document.getElementById("staticBackdrop");
-var editorReadOnly;
-
-myModalEl.addEventListener("show.bs.modal", function (event) {
-    var currentTabNum = currentTab[currentTab.length - 1];
-    var currentEditorValue = editors[currentTabNum - 1].getValue();
-
-    editorReadOnly = monaco.editor.create(
-        document.getElementById("monaco-read-only"),
-        {
-            theme: "vs-dark",
-            automaticLayout: true,
-            language: "c",
-            value: currentEditorValue,
-            readOnly: true,
-        }
-    );
-});
-
-function submitChat() {
-    var $chat = $("#chat-write");
-
-    if ($chat.val()) {
-        $(".modal-chat-content").append(
-            $("<div>")
-                .prop({
-                    className: "user-chat",
-                })
-                .prepend($("<div>").text("<"))
-                .prepend($("<div>").text($chat.val()))
-        );
-
-        $chat.val("");
-    }
-}
-
-$("#clearBtn").click(function () {
-    $(".modal-chat-content").empty();
-});
-
-$(".btn-close-editor").click(function () {
-    editorReadOnly.dispose();
-});
-
-$("#chat-write").keydown(function (event) {
-    if (event.key === "Enter") {
-        submitChat();
-    }
-});
+// var myModalEl = document.getElementById("staticBackdrop");
+// var editorReadOnly;
+//
+// myModalEl.addEventListener("show.bs.modal", function (event) {
+//     var currentTabNum = currentTab[currentTab.length - 1];
+//     var currentEditorValue = editors[currentTabNum - 1].getValue();
+//
+//     editorReadOnly = monaco.editor.create(
+//         document.getElementById("monaco-read-only"),
+//         {
+//             theme: "vs-dark",
+//             automaticLayout: true,
+//             language: "c",
+//             value: currentEditorValue,
+//             readOnly: true,
+//         }
+//     );
+// });
+//
+// function submitChat() {
+//     var $chat = $("#chat-write");
+//
+//     if ($chat.val()) {
+//         $(".modal-chat-content").append(
+//             $("<div>")
+//                 .prop({
+//                     className: "user-chat",
+//                 })
+//                 .prepend($("<div>").text("<"))
+//                 .prepend($("<div>").text($chat.val()))
+//         );
+//
+//         $chat.val("");
+//     }
+// }
+//
+// $("#clearBtn").click(function () {
+//     $(".modal-chat-content").empty();
+// });
+//
+// $(".btn-close-editor").click(function () {
+//     editorReadOnly.dispose();
+// });
+//
+// $("#chat-write").keydown(function (event) {
+//     if (event.key === "Enter") {
+//         submitChat();
+//     }
+// });
 
 /**************************** Slide-Window *****************************/
 
@@ -321,14 +335,14 @@ $("#btn_run").click(function () {
     formData.append("file", blob, filenames[currentTabNum - 1]);
     formData.append("input", InputBlob, "input.txt");
 
-    var serverURL = "lodestar.shop";
+    var serverURL = "";
 
     if (filenames[currentTabNum - 1].split(".")[1] == "py")
-        serverURL += "/python/compile";
+        serverURL += "/python/run";
     else if (filenames[currentTabNum - 1].split(".")[1] == "java")
-        serverURL += "/java/compile";
+        serverURL += "/java/run";
     else {
-        serverURL += "/c/compile";
+        serverURL += "/c/run";
     }
 
     $.ajax({
@@ -463,7 +477,7 @@ function screenshot(e) {
             formData.append("file", blob, "test.jpg");
 
             $.ajax({
-                url: "lodestar.shop/ocr",
+                url: "/ocr",
                 type: "POST",
                 data: formData,
                 processData: false,

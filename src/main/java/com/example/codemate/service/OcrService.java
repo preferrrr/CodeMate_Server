@@ -5,40 +5,23 @@ import net.sourceforge.tess4j.TesseractException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.io.*;
 import java.util.UUID;
 
 @Service
 public class OcrService {
 
-    private static final String IMAGE_FILE_PATH = "/home/ubuntu/ImageFiles/";
+    private static final String IMAGE_PATH = "/home/ubuntu/images/";
     private static final String OCR_DATA_PATH = "/home/ubuntu/Ocr/";
-//    private static String IMAGE_FILE_PATH = "C:\\intellij_project\\capstone_image\\";
-//    private static String OCR_DATA_PATH = "C:\\intellij_project\\capstone_image\\";
 
-    public String ocr(MultipartFile file) throws IOException {
+    public String ocr(MultipartFile multipartFile) throws IOException {
 
-        /**요청으로 받은 이미지 저장*/
-        String filename = UUID.randomUUID().toString() + file.getOriginalFilename().substring(file.getOriginalFilename().length() - 4, file.getOriginalFilename().length());
+        File file = convertMultipartFileToFile(multipartFile);
 
-        String imageFilePath = IMAGE_FILE_PATH + filename;
-
-        try {
-            Path destination = new File(imageFilePath).toPath();
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IOException();
-        }
-        /**요청으로 받은 이미지 저장 완료*/
-
-        String result = ocrImage(imageFilePath); // 문자 인식
+        String result = ocr(file);
 
         return result;
+
     }
 
 
@@ -49,13 +32,11 @@ public class OcrService {
         return instance;
     }
 
-    public String ocrImage(String filePath) {
+    private String ocr(File file) throws IOException{
 
         Tesseract tesseract = getTesseract();
 
         String result = null;
-
-        File file = new File(filePath);
 
         if (file.exists() && file.canRead()) {
             try {
@@ -68,5 +49,36 @@ public class OcrService {
         }
         return result;
 
+    }
+
+//    private File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
+//        File file = new File("convertedFile.png", null); // 저장될 파일 객체 생성
+//        try (OutputStream os = new FileOutputStream(file)) {
+//            InputStream is = multipartFile.getInputStream(); // MultipartFile로부터 InputStream 얻기
+//            byte[] buffer = new byte[1024]; // 버퍼 크기 설정
+//            int bytesRead;
+//            while ((bytesRead = is.read(buffer)) != -1) {
+//                os.write(buffer, 0, bytesRead);
+//            }
+//        }
+//
+//        return file;
+//    }
+
+    public File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
+        File file = new File(IMAGE_PATH + UUID.randomUUID() + ".png");
+        InputStream inputStream = multipartFile.getInputStream();
+        OutputStream outputStream = new FileOutputStream(file);
+
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            outputStream.write(buffer, 0, bytesRead);
+        }
+
+        outputStream.close();
+        inputStream.close();
+
+        return file;
     }
 }

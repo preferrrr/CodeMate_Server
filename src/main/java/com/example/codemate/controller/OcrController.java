@@ -12,16 +12,14 @@ import java.io.IOException;
 
 @RequestMapping("/ocr")
 @Controller
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class OcrController {
 
     private final OcrService ocrService;
     @PostMapping("")
-    public ResponseEntity<?> OCRtest(@RequestPart MultipartFile file) throws IOException {
+    public ResponseEntity<String> OCR(@RequestPart MultipartFile file) throws IOException {
 
         String result = ocrService.ocr(file);
-
 
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
